@@ -82,9 +82,7 @@
               },
               {
                 "Effect": "Allow",
-                "Resource": [{
-                  "Fn::GetAtt": ["ArtifactStoreS3Location", "Arn"]
-                }],
+                "Resource": "*",
                 "Action": [
                   "s3:PutObject",
                   "s3:GetObject",
@@ -248,7 +246,9 @@
           "NamespaceType": "NONE",
           "Packaging": "NONE",
           "Type": "CODEPIPELINE",
-          "Name": "CreateLambda"
+          "Name": {
+            "Ref": "CodeBuildName"
+          } 
         },
         "Cache": {
           "Type": "NO_CACHE"
@@ -326,7 +326,9 @@
                 }
               }],
               "Configuration": {
-                "ProjectName": "CreateLambda"
+                "ProjectName": {
+                  "Ref": "CodeBuildName"
+                }
               },
               "RunOrder": 1
             }]
