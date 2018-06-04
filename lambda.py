@@ -4,14 +4,9 @@ from six.moves import urllib
 import zipfile
 import stat
 import logging
-#import shutil
 
 logging.basicConfig(level=logging.DEBUG)
 print "logging"
-
-#if os.path.exists("/tmp/.theano"):
-#    shutil.rmtree("/tmp/.theano")
-
 
 
 def vectorize_sequences(sequences, dimension):
@@ -33,7 +28,7 @@ from numpy import array
 import numpy as np
 
 
-model = keras.models.load_model('my_sms_model.h5')
+model = keras.models.load_model(os.environ['MODEL_NAME'])
 
 
 def handler(event, context):
@@ -55,4 +50,3 @@ def handler(event, context):
     result = float(np.array2string(result)[2:-2])
     print(result)   
     return result
-

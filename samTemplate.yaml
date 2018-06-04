@@ -10,6 +10,9 @@ Resources:
       MemorySize: 1024
       Timeout: 10
       CodeUri: ./
+      Environment:
+        Variables:
+          MODEL_NAME: my_sms_model.h5
       Events:
         SMSspam:
           Type: Api
