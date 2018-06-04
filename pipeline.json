@@ -1,0 +1,404 @@
+{
+  "Parameters": {
+    "OutputArtifact": {
+      "Type": "String",
+      "Description": "Name of the OutputArtifact",
+      "Default": "MyApp"
+    },
+    "OutputArtifactBuild": {
+      "Type": "String",
+      "Description": "Name of the OutputArtifactBuild",
+      "Default": "MyAppBuild"
+    },
+    "PipelineName": {
+      "Type": "String",
+      "Description": "Name of the Pipeline",
+      "Default": "LambdaPipeline"
+    },
+    "CodeBuildName": {
+      "Type": "String",
+      "Description": "Name of the CodeBuildName",
+      "Default": "SMSLambdaBuilder"
+    },
+    "SourceS3Bucket": {
+      "Type": "String",
+      "Description": "Name of the SourceS3Bucket",
+      "Default": "mltestdiego"
+    },
+    "SourceS3ObjectKey": {
+      "Type": "String",
+      "Description": "Name of the SourceS3ObjectKey to monitor",
+      "Default": "my_sms_model.zip"
+    },
+    "LambdaStackName": {
+      "Type": "String",
+      "Description": "Name of the Lambda stack",
+      "Default": "LambdaStackName"
+    }
+  },
+  "Resources": {
+
+
+
+
+    "ArtifactStoreS3Location": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        }
+      }
+    },
+
+
+
+
+    "SMSCodeBuildRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": ["codebuild.amazonaws.com"]
+            },
+            "Action": ["sts:AssumeRole"]
+          }]
+        },
+        "Path": "/",
+        "Policies": [{
+          "PolicyName": "SMS-Antispam-CodeBuild-Policy",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{
+                "Effect": "Allow",
+                "Resource": "*",
+                "Action": [
+                  "logs:CreateLogGroup",
+                  "logs:CreateLogStream",
+                  "logs:PutLogEvents"
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Resource": [{
+                  "Fn::GetAtt": ["ArtifactStoreS3Location", "Arn"]
+                }],
+                "Action": [
+                  "s3:PutObject",
+                  "s3:GetObject",
+                  "s3:GetObjectVersion"
+                ]
+              }
+
+            ]
+          }
+        }]
+      }
+    },
+
+
+
+
+
+
+    "SMSCodePipelineRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": ["codepipeline.amazonaws.com"]
+            },
+            "Action": ["sts:AssumeRole"]
+          }]
+        },
+        "Path": "/",
+        "Policies": [{
+          "PolicyName": "SMS-Antispam-CodePipeline-Policy",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{
+                "Action": [
+                  "s3:GetObject",
+                  "s3:GetObjectVersion",
+                  "s3:GetBucketVersioning"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "s3:PutObject"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::codepipeline*",
+                  "arn:aws:s3:::elasticbeanstalk*"
+                ],
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "codecommit:CancelUploadArchive",
+                  "codecommit:GetBranch",
+                  "codecommit:GetCommit",
+                  "codecommit:GetUploadArchiveStatus",
+                  "codecommit:UploadArchive"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "codedeploy:CreateDeployment",
+                  "codedeploy:GetApplicationRevision",
+                  "codedeploy:GetDeployment",
+                  "codedeploy:GetDeploymentConfig",
+                  "codedeploy:RegisterApplicationRevision"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "elasticbeanstalk:*",
+                  "ec2:*",
+                  "elasticloadbalancing:*",
+                  "autoscaling:*",
+                  "cloudwatch:*",
+                  "s3:*",
+                  "sns:*",
+                  "cloudformation:*",
+                  "rds:*",
+                  "sqs:*",
+                  "ecs:*",
+                  "iam:PassRole"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "lambda:InvokeFunction",
+                  "lambda:ListFunctions"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "opsworks:CreateDeployment",
+                  "opsworks:DescribeApps",
+                  "opsworks:DescribeCommands",
+                  "opsworks:DescribeDeployments",
+                  "opsworks:DescribeInstances",
+                  "opsworks:DescribeStacks",
+                  "opsworks:UpdateApp",
+                  "opsworks:UpdateStack"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "cloudformation:CreateStack",
+                  "cloudformation:DeleteStack",
+                  "cloudformation:DescribeStacks",
+                  "cloudformation:UpdateStack",
+                  "cloudformation:CreateChangeSet",
+                  "cloudformation:DeleteChangeSet",
+                  "cloudformation:DescribeChangeSet",
+                  "cloudformation:ExecuteChangeSet",
+                  "cloudformation:SetStackPolicy",
+                  "cloudformation:ValidateTemplate",
+                  "iam:PassRole"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              },
+              {
+                "Action": [
+                  "codebuild:BatchGetBuilds",
+                  "codebuild:StartBuild"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+              }
+            ]
+          }
+        }]
+      }
+    },
+
+    "CodeBuildProject": {
+      "Type": "AWS::CodeBuild::Project",
+      "Properties": {
+        "TimeoutInMinutes": 10,
+        "Name": {
+          "Ref": "CodeBuildName"
+        },
+        "ServiceRole": {
+          "Fn::GetAtt": ["SMSCodeBuildRole", "Arn"]
+        },
+        "Tags": [],
+        "Artifacts": {
+          "NamespaceType": "NONE",
+          "Packaging": "NONE",
+          "Type": "CODEPIPELINE",
+          "Name": "CreateLambda"
+        },
+        "Cache": {
+          "Type": "NO_CACHE"
+        },
+        "Environment": {
+          "ComputeType": "BUILD_GENERAL1_SMALL",
+          "PrivilegedMode": false,
+          "Image": "aws/codebuild/ubuntu-base:14.04",
+          "Type": "LINUX_CONTAINER",
+          "EnvironmentVariables": []
+        },
+        "Source": {
+          "BuildSpec": { "Fn::Sub": [ "version: 0.2\n\nphases:\n  build:\n    commands:\n      - git clone https://github.com/sunilmallya/keras-lambda.git\n      - cd keras-lambda/src/\n      - ls -al\n      - aws s3 cp s3://${SourceBucket}/${SourceS3ObjectKey} .\n      - unzip ${SourceS3ObjectKey}\n      - rm -f ${SourceS3ObjectKey}\n      - wget https://raw.githubusercontent.com/diegonat/smsantispam/master/lambda.py\n      - rm -f samTemplate.yaml*\n      - wget https://raw.githubusercontent.com/diegonat/smsantispam/master/samTemplate.yaml\n      - aws cloudformation package --template-file samTemplate.yaml --s3-bucket ${SourceBucket} --output-template-file ../../outputSamTemplate.yaml\n      - cp samTemplate.yaml ../../\n\nartifacts:\n  type: zip\n  files:\n    - outputSamTemplate.yaml\n    - samTemplate.yaml", { "SourceBucket": {"Ref" : "SourceS3Bucket" }, "SourceS3ObjectKey": {"Ref" : "SourceS3ObjectKey"}} ]},
+          "InsecureSsl": false,
+          "Type": "CODEPIPELINE"
+        },
+        "BadgeEnabled": false,
+        "Description": "Create Lambda deploying package"
+      }
+
+    },
+
+    "LambdaPipeline": {
+      "Type": "AWS::CodePipeline::Pipeline",
+      "Properties": {
+        "RoleArn": {
+          "Fn::GetAtt": ["SMSCodePipelineRole", "Arn"]
+        },
+        "Stages": [{
+            "Name": "Source",
+            "Actions": [{
+              "InputArtifacts": [],
+              "Name": "Source",
+              "ActionTypeId": {
+                "Category": "Source",
+                "Owner": "AWS",
+                "Version": "1",
+                "Provider": "S3"
+              },
+              "OutputArtifacts": [{
+                "Name": {
+                  "Ref": "OutputArtifact"
+                }
+              }],
+              "Configuration": {
+                "S3Bucket": {
+                  "Ref": "SourceS3Bucket"
+                },
+                "PollForSourceChanges": "false",
+                "S3ObjectKey": {
+                  "Ref": "SourceS3ObjectKey"
+                }
+              },
+              "RunOrder": 1
+            }]
+          },
+          {
+            "Name": "Build",
+            "Actions": [{
+              "InputArtifacts": [{
+                "Name": {
+                  "Ref": "OutputArtifact"
+                }
+              }],
+              "Name": "CodeBuild",
+              "ActionTypeId": {
+                "Category": "Build",
+                "Owner": "AWS",
+                "Version": "1",
+                "Provider": "CodeBuild"
+              },
+              "OutputArtifacts": [{
+                "Name": {
+                  "Ref": "OutputArtifactBuild"
+                }
+              }],
+              "Configuration": {
+                "ProjectName": "CreateLambda"
+              },
+              "RunOrder": 1
+            }]
+          },
+          {
+            "Name": "ExecuteChangeSet",
+            "Actions": [{
+              "InputArtifacts": [{
+                "Name": {
+                  "Ref": "OutputArtifactBuild"
+                }
+              }],
+              "Name": "SMSspam",
+              "ActionTypeId": {
+                "Category": "Deploy",
+                "Owner": "AWS",
+                "Version": "1",
+                "Provider": "CloudFormation"
+              },
+              "OutputArtifacts": [],
+              "Configuration": {
+                "ActionMode": "CHANGE_SET_REPLACE",
+                "ChangeSetName": "SMSspam",
+                "RoleArn": "arn:aws:iam::459905850578:role/Cloudformation-IAM",
+                "Capabilities": "CAPABILITY_IAM",
+                "StackName": {
+                  "Ref": "LambdaStackName"
+                },
+                "TemplatePath": {
+                  "Fn::Sub": ["${Artifact}::outputSamTemplate.yaml", {
+                    "Artifact": {
+                      "Ref": "OutputArtifactBuild"
+                    }
+                  }]
+                }
+              },
+              "RunOrder": 1
+            }]
+          },
+          {
+            "Name": "ExecuteCF",
+            "Actions": [{
+              "InputArtifacts": [],
+              "Name": "Execute",
+              "ActionTypeId": {
+                "Category": "Deploy",
+                "Owner": "AWS",
+                "Version": "1",
+                "Provider": "CloudFormation"
+              },
+              "OutputArtifacts": [],
+              "Configuration": {
+                "StackName": {
+                  "Ref": "LambdaStackName"
+                },
+                "ActionMode": "CHANGE_SET_EXECUTE",
+                "ChangeSetName": "SMSspam"
+              },
+              "RunOrder": 1
+            }]
+          }
+        ],
+        "ArtifactStore": {
+          "Type": "S3",
+          "Location": {
+            "Ref": "ArtifactStoreS3Location"
+          }
+        },
+        "Name": {
+          "Ref": "PipelineName"
+        }
+      }
+    }
+  }
+}
