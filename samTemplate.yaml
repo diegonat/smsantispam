@@ -12,7 +12,7 @@ Resources:
       CodeUri: ./
       Environment:
         Variables:
-          MODEL_NAME: my_sms_model.h5
+          MODEL_NAME: ModelName
       Events:
         SMSspam:
           Type: Api
