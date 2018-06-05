@@ -32,10 +32,12 @@ model = keras.models.load_model(os.environ['MODEL_NAME'])
 
 
 def handler(event, context):
+    print event
+    #params = event['queryStringParameters']
 
-    sms = event['sentence']
+    sms = event['body']['sms']
+
     print sms
-    print type(sms)
 
     sentence = one_hot(str(sms), 87413)
     print sentence
