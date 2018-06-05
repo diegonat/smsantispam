@@ -34,14 +34,119 @@
       "Type": "String",
       "Description": "Name of the ModelFileName .h5 inside the zip",
       "Default": "my_sms_model.h5"
-    },    
+    },
     "LambdaStackName": {
       "Type": "String",
       "Description": "Name of the Lambda stack",
       "Default": "LambdaStackName"
     }
   },
+
+
+
+
   "Resources": {
+    "S3BucketCloudTrail": {
+      "DeletionPolicy": "Retain",
+      "Type": "AWS::S3::Bucket",
+      "Properties": {}
+    },
+    "BucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "S3BucketCloudTrail"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+              "Sid": "AWSCloudTrailAclCheck",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:GetBucketAcl",
+              "Resource": {
+                "Fn::Join": ["", ["arn:aws:s3:::", {
+                  "Ref": "S3BucketCloudTrail"
+                }]]
+              }
+            },
+            {
+              "Sid": "AWSCloudTrailWrite",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Join": ["", ["arn:aws:s3:::", {
+                  "Ref": "S3BucketCloudTrail"
+                }, "/AWSLogs/", {
+                  "Ref": "AWS::AccountId"
+                }, "/*"]]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    "myTrail": {
+      "DependsOn": ["BucketPolicy"],
+      "Type": "AWS::CloudTrail::Trail",
+      "Properties": {
+        "S3BucketName": {
+          "Ref": "S3BucketCloudTrail"
+        },
+        "EventSelectors": [{
+          "IncludeManagementEvents": true,
+          "DataResources": [{
+            "Values": [{
+              "Fn::Join": ["", ["arn:aws:s3:::", {
+                "Ref": "SourceS3Bucket"
+              }, "/", {
+                "Ref": "SourceS3ObjectKey"
+              }]]
+            }],
+            "Type": "AWS::S3::Object"
+          }],
+          "ReadWriteType": "WriteOnly"
+        }],
+        "IsLogging": true
+      }
+    },
+
+
+    "SMSCWEvent": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Amazon CloudWatch Events rule to automatically start your pipeline when a change occurs in the AWS CodeCommit source repository and branch.",
+        "EventPattern": "{\"source\":[\"aws.s3\"],\"detail-type\":[\"AWS API Call via CloudTrail\"],\"detail\":{\"eventSource\":[\"s3.amazonaws.com\"],\"eventName\":[\"PutObject\"],\"resources\":{\"ARN\":[\"arn:aws:s3:::mltestdiego/my_sms_model.zip\"]}}}",
+        "Targets": [{
+          "Arn": {
+            "Fn::Join": ["", ["arn:aws:codepipeline:", {
+              "Ref": "AWS::Region"
+            }, ":", {
+              "Ref": "AWS::AccountId"
+            }, ":", {
+              "Ref": "LambdaPipeline"
+            }]]
+          },
+          "Id": "LambdaPipeline",
+          "RoleArn": {
+            "Fn::GetAtt": ["CwIamRole", "Arn"]
+          }
+        }],
+        "State": "ENABLED"
+      }
+
+    },
 
 
 
@@ -54,6 +159,46 @@
         }
       }
     },
+
+
+
+
+    "CwIamRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": ["events.amazonaws.com"]
+            },
+            "Action": ["sts:AssumeRole"]
+          }]
+        },
+        "Path": "/",
+        "Policies": [{
+          "PolicyName": "SMS-Antispam-CodeBuild-Policy",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                "codepipeline:StartPipelineExecution"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }]
+
+          }
+        }]
+      }
+    },
+
+
+
+
 
 
 
@@ -253,7 +398,7 @@
           "Type": "CODEPIPELINE",
           "Name": {
             "Ref": "CodeBuildName"
-          } 
+          }
         },
         "Cache": {
           "Type": "NO_CACHE"
@@ -266,7 +411,19 @@
           "EnvironmentVariables": []
         },
         "Source": {
-          "BuildSpec": { "Fn::Sub": [ "version: 0.2\n\nphases:\n  build:\n    commands:\n      - \"git clone https://github.com/sunilmallya/keras-lambda.git\"\n      - \"cd keras-lambda/src/\"\n      - \"ls -al\"\n      - \"aws s3 cp s3://${SourceBucket}/${SourceS3ObjectKey} .\"\n      - \"unzip ${SourceS3ObjectKey}\"\n      - \"rm -f ${SourceS3ObjectKey}\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/lambda.py\"\n      - \"rm -f samTemplate.yaml*\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/samTemplate.yaml\"\n      - \"sed -i -e 's/MODEL_NAME: ModelName/MODEL_NAME: ${ModelFileName}/g' samTemplate.yaml\"\n      - \"aws cloudformation package --template-file samTemplate.yaml --s3-bucket ${SourceBucket} --output-template-file ../../outputSamTemplate.yaml\"\n      - \"cp samTemplate.yaml ../../\"\n\nartifacts:\n  type: zip\n  files:\n    - outputSamTemplate.yaml\n    - samTemplate.yaml", { "SourceBucket": {"Ref" : "SourceS3Bucket" }, "ModelFileName": {"Ref" : "ModelFileName"}, "SourceS3ObjectKey": {"Ref" : "SourceS3ObjectKey"}} ]},
+          "BuildSpec": {
+            "Fn::Sub": ["version: 0.2\n\nphases:\n  build:\n    commands:\n      - \"git clone https://github.com/sunilmallya/keras-lambda.git\"\n      - \"cd keras-lambda/src/\"\n      - \"ls -al\"\n      - \"aws s3 cp s3://${SourceBucket}/${SourceS3ObjectKey} .\"\n      - \"unzip ${SourceS3ObjectKey}\"\n      - \"rm -f ${SourceS3ObjectKey}\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/lambda.py\"\n      - \"rm -f samTemplate.yaml*\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/samTemplate.yaml\"\n      - \"sed -i -e 's/MODEL_NAME: ModelName/MODEL_NAME: ${ModelFileName}/g' samTemplate.yaml\"\n      - \"aws cloudformation package --template-file samTemplate.yaml --s3-bucket ${SourceBucket} --output-template-file ../../outputSamTemplate.yaml\"\n      - \"cp samTemplate.yaml ../../\"\n\nartifacts:\n  type: zip\n  files:\n    - outputSamTemplate.yaml\n    - samTemplate.yaml", {
+              "SourceBucket": {
+                "Ref": "SourceS3Bucket"
+              },
+              "ModelFileName": {
+                "Ref": "ModelFileName"
+              },
+              "SourceS3ObjectKey": {
+                "Ref": "SourceS3ObjectKey"
+              }
+            }]
+          },
           "InsecureSsl": false,
           "Type": "CODEPIPELINE"
         },
