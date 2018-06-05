@@ -8,6 +8,14 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 print "logging"
 
+def response(status_code, response_body):
+    return {
+                'statusCode': status_code,
+                'body': json.dumps(response_body) if response_body else json.dumps({}),
+                'headers': {
+                    'Content-Type': 'application/json',
+                },
+            }
 
 def vectorize_sequences(sequences, dimension):
     results = np.zeros((len(sequences), dimension))
@@ -51,4 +59,5 @@ def handler(event, context):
     print "Type: ", type(result)
     result = float(np.array2string(result)[2:-2])
     print(result)   
-    return result
+    
+    return response(200, result)
