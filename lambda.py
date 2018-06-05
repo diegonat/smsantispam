@@ -43,7 +43,7 @@ def handler(event, context):
     print event
     #params = event['queryStringParameters']
 
-    sms = event['body']['sms']
+    sms = event['body']
 
     print sms
 
