@@ -18,4 +18,4 @@ Resources:
           Type: Api
           Properties:
             Path: /
-            Method: GET
+            Method: POST
