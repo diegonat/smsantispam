@@ -4,6 +4,7 @@ from six.moves import urllib
 import zipfile
 import stat
 import logging
+import json
 
 logging.basicConfig(level=logging.DEBUG)
 print "logging"
