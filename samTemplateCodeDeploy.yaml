@@ -21,4 +21,4 @@ Resources:
             Path: /
             Method: POST
       DeploymentPreference:
-        Type: Linear10PercentEvery10Minutes
+        Type: LambdaCanary10Percent5Minutes
