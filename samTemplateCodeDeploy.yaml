@@ -23,4 +23,4 @@ Resources:
       DeploymentPreference:
         Type: Canary10Percent5Minutes
         Hooks:
-          PreTraffic: arn:aws:lambda:us-east-1:459905850578:function:lambdaChecker
+          PreTraffic: arn:aws:lambda:us-east-1:${AWS::AccountId}:function:lambdaChecker
