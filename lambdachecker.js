@@ -7,6 +7,8 @@ var lambda = new AWS.Lambda();
 exports.handler = (event, context, callback) => {
 
 	console.log("Entering PreTraffic Hook!");
+	console.log(event);
+
 	
 	// Read the DeploymentId & LifecycleEventHookExecutionId from the event payload
     var deploymentId = event.DeploymentId;
@@ -32,6 +34,12 @@ exports.handler = (event, context, callback) => {
 			var result = JSON.parse(data.Payload);
 			console.log("Result: " +  JSON.stringify(result));
 
+			if (result['statusCode'] == 200) {
+				lambdaResult = "Succeeded";
+			}
+			else {
+				lambdaResult = "Failed";	
+			}
 
 			// Check the response for valid results
 			// The response will be a JSON payload with statusCode and body properties. ie:
@@ -39,7 +47,6 @@ exports.handler = (event, context, callback) => {
 			//		"statusCode": 200,
 			//		"body": 51
 			// }
-			lambdaResult = "Succeeded"
 			
 			// Complete the PreTraffic Hook by sending CodeDeploy the validation status
 			var params = {
