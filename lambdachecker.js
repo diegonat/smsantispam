@@ -21,7 +21,8 @@ exports.handler = (event, context, callback) => {
 		InvocationType: "RequestResponse"
 	};
 
-	var lambdaResult = "Call now and get 80% discount on your next pair of shoes! Call 8003344555!";
+	var lambdaResult = '{ "body": "Call now and get 80% discount on your next pair of shoes! Call 8003344555!"	}';
+
 	lambda.invoke(lambdaParams, function(err, data) {
 		if (err){	// an error occurred
 			console.log(err, err.stack);
@@ -30,6 +31,7 @@ exports.handler = (event, context, callback) => {
 		else{	// successful response
 			var result = JSON.parse(data.Payload);
 			console.log("Result: " +  JSON.stringify(result));
+
 
 			// Check the response for valid results
 			// The response will be a JSON payload with statusCode and body properties. ie:

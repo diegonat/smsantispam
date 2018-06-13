@@ -46,6 +46,10 @@
 
 
   "Resources": {
+
+
+
+
     "S3BucketCloudTrail": {
       "DeletionPolicy": "Retain",
       "Type": "AWS::S3::Bucket",
@@ -412,7 +416,7 @@
         },
         "Source": {
           "BuildSpec": {
-            "Fn::Sub": ["version: 0.2\n\nphases:\n  build:\n    commands:\n      - \"git clone https://github.com/sunilmallya/keras-lambda.git\"\n      - \"cd keras-lambda/src/\"\n      - \"ls -al\"\n      - \"aws s3 cp s3://${SourceBucket}/${SourceS3ObjectKey} .\"\n      - \"unzip ${SourceS3ObjectKey}\"\n      - \"rm -f ${SourceS3ObjectKey}\"\n      - \"rm -f lambda.py*\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/lambda.py\"\n      - \"rm -f samTemplateCodeDeploy.yaml*\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/samTemplateCodeDeploy.yaml\"\n      - \"sed -i -e 's/MODEL_NAME: ModelName/MODEL_NAME: ${ModelFileName}/g' samTemplateCodeDeploy.yaml\"\n      - \"aws cloudformation package --template-file samTemplateCodeDeploy.yaml --s3-bucket ${SourceBucket} --output-template-file ../../outputSamTemplate.yaml\"\n      - \"cp samTemplateCodeDeploy.yaml ../../\"\n\nartifacts:\n  type: zip\n  files:\n    - outputSamTemplate.yaml\n    - samTemplateCodeDeploy.yaml", {
+            "Fn::Sub": ["version: 0.2\n\nphases:\n  build:\n    commands:\n      - \"git clone https://github.com/sunilmallya/keras-lambda.git\"\n      - \"cd keras-lambda/src/\"\n      - \"ls -al\"\n      - \"aws s3 cp s3://${SourceBucket}/${SourceS3ObjectKey} .\"\n      - \"unzip ${SourceS3ObjectKey}\"\n      - \"rm -f ${SourceS3ObjectKey}\"\n      - \"rm -f lambda.py*\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/lambda.py\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/lambdachecker.py\"\n      - \"rm -f samTemplateCodeDeploy.yaml*\"\n      - \"wget https://raw.githubusercontent.com/diegonat/smsantispam/master/samTemplateCodeDeploy.yaml\"\n      - \"sed -i -e 's/MODEL_NAME: ModelName/MODEL_NAME: ${ModelFileName}/g' samTemplateCodeDeploy.yaml\"\n      - \"aws cloudformation package --template-file samTemplateCodeDeploy.yaml --s3-bucket ${SourceBucket} --output-template-file ../../outputSamTemplate.yaml\"\n      - \"cp samTemplateCodeDeploy.yaml ../../\"\n\nartifacts:\n  type: zip\n  files:\n    - outputSamTemplate.yaml\n    - samTemplateCodeDeploy.yaml", {
               "SourceBucket": {
                 "Ref": "SourceS3Bucket"
               },
@@ -565,4 +569,5 @@
       }
     }
   }
+
 }
