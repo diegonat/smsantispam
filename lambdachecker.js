@@ -20,10 +20,11 @@ exports.handler = (event, context, callback) => {
 	// Perform validation of the newly deployed Lambda version
 	var lambdaParams = {
 		FunctionName: functionToTest,
-		InvocationType: "RequestResponse"
+		InvocationType: "RequestResponse",
+		Payload: new Buffer('{ "body": "Call now and get 80% discount on your next pair of shoes! Call 8003344555!"	}')
 	};
 
-	var lambdaResult = '{ "body": "Call now and get 80% discount on your next pair of shoes! Call 8003344555!"	}';
+	var lambdaResult = 'Failed'
 
 	lambda.invoke(lambdaParams, function(err, data) {
 		if (err){	// an error occurred
