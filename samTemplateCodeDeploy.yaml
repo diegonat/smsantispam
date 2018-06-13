@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Prediction 
+Resources:
+  SMSantispam:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: lambda.handler
+      Runtime: python2.7
+      MemorySize: 256
+      Timeout: 10
+      CodeUri: ./
+      Environment:
+        Variables:
+          MODEL_NAME: ModelName
+      Events:
+        SMSspam:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+      DeploymentPreference:
+        Type: Linear10PercentEvery10Minutes
