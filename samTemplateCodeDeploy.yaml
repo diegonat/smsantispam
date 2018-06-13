@@ -9,6 +9,7 @@ Resources:
       Handler: lambda.handler
       Runtime: python2.7
       MemorySize: 256
+      Tracing: Active
       Timeout: 10
       CodeUri: ./
       Environment:
