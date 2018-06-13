@@ -23,4 +23,32 @@ Resources:
       DeploymentPreference:
         Type: Canary10Percent5Minutes
         Hooks:
-          PreTraffic: arn:aws:lambda:us-east-1:${AWS::AccountId}:function:lambdaChecker
+          PreTraffic: !Ref preTrafficHook
+
+  preTrafficHook:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: lambdachecker.handler
+      CodeUri: ./
+      Policies:
+        - Version: "2012-10-17"
+          Statement: 
+          - Effect: "Allow"
+            Action: 
+              - "codedeploy:PutLifecycleEventHookExecutionStatus"
+            Resource:
+              !Sub 'arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${ServerlessDeploymentApplication}/*'
+        - Version: "2012-10-17"
+          Statement: 
+          - Effect: "Allow"
+            Action: 
+              - "lambda:InvokeFunction"
+            Resource: !Ref SMSantispam.Version
+      Runtime: nodejs6.10
+      FunctionName: 'CodeDeployHook_preTrafficHook'
+      DeploymentPreference:
+        Enabled: false
+      Timeout: 5
+      Environment:
+        Variables:
+          NewVersion: !Ref SMSantispam.Version
