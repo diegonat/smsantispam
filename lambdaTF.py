@@ -5,6 +5,9 @@ import zipfile
 import stat
 import logging
 import json
+import numpy as np
+from keras.preprocessing.text import one_hot
+import tensorflow as tf
 
 logging.basicConfig(level=logging.DEBUG)
 print "logging"
@@ -19,9 +22,9 @@ def response(status_code, response_body):
             }
 
 def vectorize_sequences(sequences, dimension):
-    results = numpy.zeros((len(sequences), dimension))
+    results = np.zeros((len(sequences), dimension))
     for i, sequence in enumerate(sequences):
-       results[i, sequence] = 1. 
+       results[i, sequence] = 1.
     return results
 
 def one_hot_encode(messages, dimension):
@@ -38,18 +41,10 @@ for d, _, files in os.walk('lib'):
         print('loading %s...' % f)
         ctypes.cdll.LoadLibrary(os.path.join(d, f))
 
-import keras
-from keras.preprocessing.text import one_hot
-from numpy import array
-import numpy as np
-import tensorflow as tf
-
-
 
 
 path_to_model = "./"
 vocabulary_lenght = 9013
-
 
 
 def handler(event, context):
@@ -81,5 +76,3 @@ def handler(event, context):
        result = predictions[0][0]
 
        return response(200, result)
-
-
