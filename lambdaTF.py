@@ -15,7 +15,7 @@ print "logging"
 def response(status_code, response_body):
     return {
                 'statusCode': status_code,
-                'body': response_body,
+                'body': str(response_body),
                 'headers': {
                     'Content-Type': 'application/json',
                 },
