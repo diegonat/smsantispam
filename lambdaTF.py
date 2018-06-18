@@ -46,6 +46,8 @@ for d, _, files in os.walk('lib'):
 path_to_model = "./"
 vocabulary_lenght = 9013
 
+sess = tf.Session()
+tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], path_to_model)
 
 def handler(event, context):
     print event
@@ -61,18 +63,12 @@ def handler(event, context):
     one_hot_test_messages = one_hot_encode(test_messages, vocabulary_lenght)
     encoded_test_messages = vectorize_sequences(one_hot_test_messages, vocabulary_lenght)
 
-    with tf.Session(graph=tf.Graph()) as sess:
-       tf.saved_model.loader.load(
-           sess,
-           [tf.saved_model.tag_constants.SERVING],
-           path_to_model)
 
+    sigmoid_tensor = sess.graph.get_tensor_by_name('dense_1/Sigmoid:0')
+    predictions = sess.run(sigmoid_tensor, {'Placeholder_1:0': encoded_test_messages})
 
-       sigmoid_tensor = sess.graph.get_tensor_by_name('dense_1/Sigmoid:0')
-       predictions = sess.run(sigmoid_tensor, {'Placeholder_1:0': encoded_test_messages})
+    print(predictions[0][0])
 
-       print(predictions[0][0])
+    result = predictions[0][0]
 
-       result = predictions[0][0]
-
-       return response(200, result)
+    return response(200, result)
