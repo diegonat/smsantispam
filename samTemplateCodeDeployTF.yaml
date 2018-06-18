@@ -12,9 +12,6 @@ Resources:
       Tracing: Active
       Timeout: 10
       CodeUri: ./
-      Environment:
-        Variables:
-          MODEL_PATH: ModelPath
       Events:
         SMSspam:
           Type: Api
