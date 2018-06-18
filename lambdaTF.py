@@ -47,7 +47,7 @@ import tensorflow as tf
 
 
 
-path_to_model = os.environ['MODEL_PATH']
+path_to_model = "./"
 vocabulary_lenght = 9013
 
 
