@@ -55,7 +55,7 @@ def handler(event, context):
 
     print sms
 
-    test_messages = [sms]
+    test_messages = [sms.encode('ascii','ignore')]
 
 
     one_hot_test_messages = one_hot_encode(test_messages, vocabulary_lenght)
