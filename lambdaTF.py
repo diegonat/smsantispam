@@ -64,7 +64,7 @@ def handler(event, context):
     encoded_test_messages = vectorize_sequences(one_hot_test_messages, vocabulary_lenght)
 
 
-    sigmoid_tensor = sess.graph.get_tensor_by_name('dense_1/Sigmoid:0')
+    sigmoid_tensor = sess.graph.get_tensor_by_name('output-layer/Sigmoid:0')
     predictions = sess.run(sigmoid_tensor, {'Placeholder_1:0': encoded_test_messages})
 
     print(predictions[0][0])
