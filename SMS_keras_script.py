@@ -12,9 +12,9 @@ LEARNING_RATE = 0.01
 
 def model_fn(features, labels, mode, params):
 
-    first_hidden_layer = tf.keras.layers.Dense(16, activation='relu', name='first-layer')(features[INPUT_TENSOR_NAME])
-    second_hidden_layer = tf.keras.layers.Dense(16, activation='relu')(first_hidden_layer)
-    output_layer = tf.keras.layers.Dense(1, activation='sigmoid')(second_hidden_layer)
+    first_hidden_layer = tf.keras.layers.Dense(16, activation='relu', name='input-layer')(features[INPUT_TENSOR_NAME])
+    second_hidden_layer = tf.keras.layers.Dense(16, activation='relu', name='first-layer')(first_hidden_layer)
+    output_layer = tf.keras.layers.Dense(1, activation='sigmoid', name='output-layer')(second_hidden_layer)
     predictions = output_layer
 
     # Provide an estimator spec for `ModeKeys.PREDICT`.
