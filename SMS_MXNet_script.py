@@ -34,7 +34,7 @@ def train(hyperparameters, input_data_config, channel_input_dirs, output_data_di
     # retrieve the hyperparameters we set in notebook (with some defaults)
     batch_size = hyperparameters.get('batch_size', 200)
     epochs = hyperparameters.get('epochs', 10)
-    learning_rate = hyperparameters.get('learning_rate', 0.1)
+    learning_rate = hyperparameters.get('learning_rate', 0.01)
     momentum = hyperparameters.get('momentum', 0.9)
     log_interval = hyperparameters.get('log_interval', 200)
 
@@ -47,7 +47,7 @@ def train(hyperparameters, input_data_config, channel_input_dirs, output_data_di
     net = define_network()
 
     # Collect all parameters from net and its children, then initialize them.
-    net.initialize(mx.init.Xavier(magnitude=2.24), ctx=ctx)
+    net.initialize(mx.init.Normal(sigma=1.), ctx=ctx)
     
     # Trainer is for updating parameters with gradient.
     if len(hosts) == 1:
@@ -59,8 +59,8 @@ def train(hyperparameters, input_data_config, channel_input_dirs, output_data_di
                             {'learning_rate': learning_rate, 'momentum': momentum},
                             kvstore=kvstore)
     
-    metric = mx.metric.F1()
-    loss = gluon.loss.SigmoidBinaryCrossEntropyLoss()
+    metric = mx.metric.Accuracy()
+    loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
     for epoch in range(epochs):
         
@@ -113,7 +113,8 @@ def define_network():
     with net.name_scope():
         net.add(nn.Dense(16, activation='relu'))
         net.add(nn.Dense(16, activation='relu'))
-        net.add(nn.Dense(1, activation='sigmoid'))
+        net.add(nn.Dense(2))
+        #net.add(nn.Dense(1))
     return net
 
 
@@ -135,7 +136,7 @@ def get_val_data(data_path, batch_size):
     return gluon.data.DataLoader(gluon.data.ArrayDataset(features, labels), batch_size=batch_size, shuffle=False)
 
 def test(ctx, net, val_data):
-    metric = mx.metric.F1()
+    metric = mx.metric.Accuracy()
     for data, label in val_data:
         data = data.as_in_context(ctx)
         label = label.as_in_context(ctx)
@@ -147,6 +148,7 @@ def test(ctx, net, val_data):
 # ------------------------------------------------------------ #
 # Hosting methods                                              #
 # ------------------------------------------------------------ #
+
 
 def model_fn(model_dir):
     """
@@ -162,7 +164,6 @@ def model_fn(model_dir):
     net = gluon.SymbolBlock(outputs, inputs, param_dict)
     net.load_params('%s/model.params' % model_dir, ctx=mx.cpu())
     return net
-
 
 def transform_fn(net, data, input_content_type, output_content_type):
     """
@@ -181,8 +182,8 @@ def transform_fn(net, data, input_content_type, output_content_type):
         parsed = json.loads(data)
         nda = mx.nd.array(parsed)
         output = net(nda)
-        prediction = mx.nd.argmax(output, axis=1)
-        response_body = json.dumps(prediction.asnumpy().tolist()[0])
+        #prediction = mx.nd.argmax(output, axis=1)
+        response_body = json.dumps(output.asnumpy().tolist())
         return response_body, output_content_type
     except Exception as ex:
         response_body = '{error: }' + str(ex)
