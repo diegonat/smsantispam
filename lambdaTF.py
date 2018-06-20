@@ -63,8 +63,13 @@ def handler(event, context):
     one_hot_test_messages = one_hot_encode(test_messages, vocabulary_lenght)
     encoded_test_messages = vectorize_sequences(one_hot_test_messages, vocabulary_lenght)
 
+    try:
+    	sigmoid_tensor = sess.graph.get_tensor_by_name('output-layer/Sigmoid:0')
+    else:
+	sigmoid_tensor = sess.graph.get_tensor_by_name('dense_2/Sigmoid:0')
+    except:
+        print 'error'
 
-    sigmoid_tensor = sess.graph.get_tensor_by_name('output-layer/Sigmoid:0')
     predictions = sess.run(sigmoid_tensor, {'Placeholder_1:0': encoded_test_messages})
 
     print(predictions[0][0])
