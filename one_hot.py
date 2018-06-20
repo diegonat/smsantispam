@@ -1,6 +1,6 @@
 import string
 import sys
-import warnings
+#import warnings
 from hashlib import md5
 
 import numpy as np
