@@ -70,6 +70,7 @@ def handler(event, context):
     except:
         print 'error'
 
+
     predictions = sess.run(sigmoid_tensor, {'Placeholder_1:0': encoded_test_messages})
 
     print(predictions[0][0])
