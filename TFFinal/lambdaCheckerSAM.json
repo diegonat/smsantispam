@@ -1,0 +1,54 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Prediction",
+  "Parameters": {
+    "S3Bucket": {
+      "Type": "String",
+      "Description": "Name of the S3Bucket where the LambdaChecker code is",
+      "Default": "mltestdiego"
+    },
+    "S3Key": {
+      "Type": "String",
+      "Description": "Name of the S3Key of LambdaChecker code",
+      "Default": "lambdachecker.js.zip"
+    }    
+  },
+  "Resources": {
+    "LambdaCheckerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Action": ["sts:AssumeRole"],
+            "Effect": "Allow",
+            "Principal": {
+              "Service": ["lambda.amazonaws.com"]
+            }
+          }]
+        }
+      }
+    },
+    "LambdaChecker": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "S3Bucket"
+          },
+          "S3Key": {
+            "Ref": "S3Key"
+          }
+        },
+        "MemorySize": 128,
+        "Handler": "lambdachecker.handler",
+        "Role": {
+          "Fn::GetAtt": ["LambdaCheckerRole", "Arn"]
+        },
+        "Timeout": 3,
+        "Runtime": "nodejs6.10"
+      }
+    }
+  }
+}
